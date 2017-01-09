@@ -1,0 +1,10 @@
+{
+  "name": "docchain",
+  "version": "0.0.0",
+  "dependencies": {
+  },
+  "devDependencies": {
+  },
+  "appPath": ".",
+  "moduleName": "FileUploadApp"
+}

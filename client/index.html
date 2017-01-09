@@ -1,0 +1,166 @@
+<!DOCTYPE HTML>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>Stratumn DocChain</title>
+
+		<!-- App CSS -->
+		<!-- build:css(.tmp) styles/main.css -->
+		<link rel="stylesheet" href="styles/main.css">
+		<!-- endbuild -->
+
+		<!-- Meta-Information -->
+		<meta name="description" content="File Upload To S3">
+		<!--Optimize for mobile-->
+		<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+		<meta name="msapplication-tap-highlight" content="no" />
+		<meta name="theme-color" content="#ffab40">
+		<base href="/" />
+
+		<!-- Materialize.css Compiled and minified CSS -->
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.97.3/css/materialize.min.css">
+		<!-- Material Icons -->
+		<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+	</head>
+
+	<body ng-app="FileUploadApp" class="blue lighten-5">
+
+	  <div id="home">
+	    <div class="jumbotron">
+	    <!-- <div class="blue darken-2 white-text"> -->
+	      <div class="container">
+	        <div class="row">
+	          <div class="col s12 left">
+	            <a id="brand" href="/">docchain.stratumn.com</a>
+	          </div>
+	        </div>
+	        <div class="row">
+	          <div class="col s12">
+	            <h1>Signature et authentification d'un formulaire de consentement à un protocole de recherche clinique</h1>
+	          </div>
+			  <div class="col s12 right bold white-text right-align">
+			  	<i class="material-icons yellow-text bold">watch_later</i>
+			  	<span id="Today" class=""></span>
+			  </div>
+	        </div>
+	      </div>
+	    </div>
+	    <div class="container">
+	      <form action="#" ng-submit="AddInvites" method="POST" enctype="multipart/form-data">
+			<div id="UploadFile1" class="row" ng-controller="FileUploadCtrl">
+				<div class="col s12">
+				   <div class="file-field input-field">
+				    <div ng-hide="isUploading" class="btn blue">
+				      <i class="material-icons">attach_file</i>
+				      <span>Choisir le PDF</span>
+				      <input id="fileupload" file-model="uploadFile" type="file" accept=".pdf">
+				    </div>
+			        <div class="file-path-wrapper">
+				        <input id="filename" class="file-path validate" type="text"/>
+				    </div>
+				  </div>
+				</div>
+				<div ng-show="isUploading" id="UploadBtnProgress" class="col s12">
+				<!-- isUploading = {{isUploading}}			  	   -->
+				  <div class="progress">
+				      <div class="indeterminate"></div>
+				  </div>
+				</div>
+				<div ng-hide="isUploading" id="UploadBtn1" class="hide col s12">
+			  	  <a class="col s6 waves-green btn left" ng-click="upload()"><i class="material-icons right">file_upload</i>Envoyer</a>
+			  	  <!-- <a class="col s2 waves-effect waves-red btn red right" ng-click="cancel()"><i class="material-icons right">cancel</i>Retour</a> -->
+				</div>
+			</div>
+			<div id="EmailInvites" class="hide row" ng-controller="EmailInvites">
+				<div class="row">
+					<div class="input-field col s12">
+					  <i class="material-icons prefix">create</i>
+					  <input id="pdf_title" ng-model="pdf_title" type="text" class="validate">
+					  <label for="pdf_title">Objet de l’email</label>
+					</div>
+
+					<div class="input-field col s6">
+					  <i class="material-icons prefix">email</i>
+					  <input id="doc_email" ng-model="doc_email" type="email" class="validate">
+					  <label for="doc_email">Adresse email de l'investigateur</label>
+					</div>
+					<div class="input-field col s6">
+					  <i class="material-icons prefix">account_circle</i>
+					  <input id="doc_name" ng-model="doc_name" type="text" class="validate">
+					  <label for="doc_name">Nom de l'investigateur</label>
+					</div>
+					<div class="input-field col s12">
+					  <i class="material-icons prefix">speaker_notes</i>
+					  <textarea id="cond" ng-model="cond" class="materialize-textarea"></textarea>
+					  <label for="cond">Texte qui apparaitra dans l'email envoyé aux participants</label>
+					</div>
+					<div class="input-field col s6">
+					  <i class="material-icons prefix">person_add</i>
+					  <input id="InviteEmail" type="email" class="validate" ng-model="InviteEmail">
+					  <label for="InviteEmail">Adresse email du participant à inviter</label>
+					</div>
+					<div class="input-field col s5">
+					  <input id="InviteName" type="text" class="validate" ng-model="InviteName" ng-enter="AddInvites()">
+					  <label for="InviteName">Nom du participant</label>
+					</div>
+					<a class="s2 right btn-small circle waves-effect waves-light" ng-click="AddInvites()"> <i class="material-icons prefix">add_circle</i></a>
+				</div>
+				<div class="row">
+				  <div ng-repeat="Invite in Invites" class="left chip tooltipped" data-position="top" data-delay="50" data-tooltip="{{Invite.Email}}">
+				  	{{Invite.Name}}
+				    <i class="material-icons" ng-click="RemoveInvites(Invite.Email)">close</i>
+				  </div>
+				</div>
+				<div class="row">
+					<div class="input-field col s6">
+					  <i class="material-icons prefix">date_range</i>
+					  <input id="expires_in" ng-model="expires_in" type="text" class="validate">
+					  <label for="expires_in">Durée de l'accès au document (en jours)</label>
+					</div>
+					<div class="input-field col s6">
+					  <i class="material-icons prefix">format_list_numbered</i>
+					  <input id="max_patients" ng-model="max_patients" type="text" class="validate">
+					  <label for="max_patients">Nombre maximum d'inscriptions</label>
+					</div>
+				</div>
+
+				<div ng-show="isEmailing" id="EmailBtnProgress" class="col s12">
+				  <div class="progress">
+				      <div class="indeterminate"></div>
+				  </div>
+				</div>
+				<div ng-hide="isEmailing" class="row">
+					<a ng-show="doc_name && doc_email && pdf_title && cond && expires_in && max_patients && Invites.length" class="waves-effect waves-light btn right" ng-click="SendEmail()"><i class="material-icons right">send</i>Envoyer</a>
+					<span ng-hide="doc_name && doc_email && pdf_title && cond && expires_in && max_patients && Invites.length" class="right-align right blue-text bold">* Merci de remplir tous les champs</span>
+				</div>
+			</div>
+	      </form>
+	    </div>
+	  </div>
+	</body>
+
+	<!-- Vendor: Javascripts -->
+    <script type="text/javascript"
+      src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.0.0-alpha1/jquery.min.js"></script>
+    <script type="text/javascript"
+      src="https://ajax.googleapis.com/ajax/libs/angularjs/1.0.7/angular.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.97.3/js/materialize.min.js"></script>
+
+	<!-- App Javascripts -->
+	<!-- build:js({.tmp,.}) scripts/scripts.js -->
+	<script src="js/app.js"></script>
+	<script src="js/controllers/FileUploadCtrl.js"></script>
+	<script src="js/controllers/EmailInvites.js"></script>
+	<script src="js/services/FileUploadService.js"></script>
+	<script src="js/services/EmailService.js"></script>
+	<script src="js/directives/fileModel.js"></script>
+	<script src="js/directives/repeatDone.js"></script>
+	<script src="js/controllers/VersionCtrl.js"></script>
+	<script src="js/services/VersionService.js"></script>
+	<script src="js/services/CommonDataService.js"></script>
+	<script src="js/controllers/SignCtrl.js"></script>
+	<script src="js/services/SignService.js"></script>
+	<script src="js/custom.js"></script>
+	<!-- endbuild -->
+</html>

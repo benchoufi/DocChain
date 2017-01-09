@@ -1,0 +1,182 @@
+<!DOCTYPE HTML>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>Stratumn DocChain</title>
+
+		<!-- App CSS -->
+		<!-- build:css(.tmp) styles/main.css -->
+		<link rel="stylesheet" href="styles/main.css">
+		<!--endbuild-->
+
+		<!-- Meta-Information -->
+		<meta name="description" content="File Upload To S3">
+		<!--Optimize for mobile-->
+		<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+		<meta name="msapplication-tap-highlight" content="no" />
+		<meta name="theme-color" content="#ffab40">
+		<base href="/" />
+
+		<!-- Materialize.css Compiled and minified CSS -->
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.97.3/css/materialize.min.css">
+		<!-- Material Icons -->
+		<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+	</head>
+
+  <body>
+  	<div class="container-fluid" ng-app="FileUploadApp">
+	    <div class="row  blue lighten-5" ng-controller="SignCtrl">
+	  	  <div ng-show="isLoading" class="container section">
+			  <div class="center-align preloader-wrapper big active">
+			    <div class="spinner-layer spinner-blue-only center-align ">
+			      <div class="circle-clipper left">
+			        <div class="circle"></div>
+			      </div><div class="gap-patch">
+			        <div class="circle"></div>
+			      </div><div class="circle-clipper right">
+			        <div class="circle"></div>
+			      </div>
+			    </div>
+			  </div>
+	  	  </div>
+	      <div ng-hide="isLoading || data.Canceled" class="col s4 no-padding">
+	      		<div class="col s12 blue darken-2">
+					<div class="section left-align">
+						<h5 ng-show="data.Expired"class="left-align white-text">
+							<i class="material-icons prefix yellow-text"/>highlight_off</i>
+							Cette étude est fermée
+						</h5>
+						<h6 class="left-align white-text">
+							<i class="material-icons prefix yellow-text"/>format_quote</i>
+							{{data.Conditions}}
+						</h6>
+						<!-- <h4 id="brand" class="yellow-text">{{data.Conditions}}</h4> -->
+						<!-- <br/> -->
+					</div>
+					<div id="chk1IconRow" class="col s1" ng-hide="data.Expired || AlreadySigned > -1">
+						<i class="material-icons circle white blue-text">play_arrow</i>
+					</div>
+			        <div id="chk1Row" class="col s11" ng-hide="data.Expired || AlreadySigned > -1">
+				      <input type="checkbox" id="chk1Btn" ng-model="chk1Btn"/>
+				      <label for="chk1Btn" id="chk1Label" class="bold yellow-text">J’ai bien pris connaissance de la note d'information relative à l'étude</label>
+			        </div>
+					<div id="chk2IconRow" class="col s1" ng-hide="data.Expired || AlreadySigned > -1">
+						 &nbsp;
+					</div>
+			        <div id="chk2Row" class="col s11" ng-hide="data.Expired || AlreadySigned > -1">
+				      <input type="checkbox" id="chk2Btn" ng-model="chk2Btn" disabled />
+				      <label for="chk2Btn" id="chk2Label" class="yellow-label">Je suis volontaire pour y participer</label>
+			        </div>
+			        <div class="col s12" ng-hide="data.Expired || AlreadySigned > -1">&nbsp;</div>
+					<div id="ButtonSignIcon" class="col s1" ng-hide="data.Expired || AlreadySigned > -1">
+						&nbsp;
+					</div>
+					<div id="ButtonSignFiller" class="col s11" ng-hide="data.Expired || AlreadySigned > -1">&nbsp;</div>
+					<div id="ButtonSign" class="hide col s11" ng-hide="data.Expired || AlreadySigned > -1">
+						<a class="col s6 left btn btn-lg btn-block btn-primary white black-text bold" ng-click="Save(1)"><span class="hide-on-med-and-down">J'accepte</span><i class="material-icons right hide-on-med-and-down blue-text">check_circle</i><i class="material-icons hide-on-large-only blue-text">check_circle</i>
+						</a>
+						<a class="col s5 right btn btn-lg btn-block btn-primary red" ng-click="Save(0)"><span class="hide-on-med-and-down">Je refuse</span><i class="material-icons right hide-on-med-and-down">cancel</i><i class="material-icons hide-on-large-only">cancel</i>
+						</a>
+					</div>
+					<div class="col s12" ng-hide="data.Expired || AlreadySigned > -1">&nbsp;</div>
+	      		</div>
+	      		<div class="col s12">&nbsp;</div>
+				<div class="col s12">
+					<div class="col s12 bold">
+						Mes Informations de Sécurité
+						<a class="waves-effect waves-light teal-text">
+							<i class="material-icons">help</i>
+						</a>
+					</div>
+					<br/>
+					<div class="col s12">
+					  <label for="signature" class="black-text">Votre signature</label>
+					  <input id="signature" type="text" class="black-text form-control" name="signature" ng-model="data.Signature" disabled="" />
+					</div>
+					<div class="col s12">
+					  <label for="privkey" class="black-text">Votre clé sécurisée</label>
+					  <input id="privkey" type="text" class="black-text form-control" name="privkey" ng-model="WIF" disabled="" />
+					</div>
+					<div class="col s12 black-text">
+					  <label for="digest" class="black-text">Version encodée du formulaire de consentement</label>
+					  <input type="text" id="digest" class="black-text form-control" name="digest" ng-model="data.FileHash" disabled />
+					</div>
+				</div>
+	      </div>
+	      <div ng-show="!isLoading && data.Canceled" class="col s4 no-padding">
+				<h5 class="left-align red-text">
+					<i class="material-icons prefix red-text"/>highlight_off</i>
+					Cette étude a été révoquée
+				</h5>
+	      </div>
+	      <div ng-hide="isLoading" class="col s8 no-padding">
+			<div class="section blue center-align">
+				<h4 id="brand" class="yellow-text"><span class="numberCircle left-align"><span>{{data.Version}}</span></span> {{data.PDF_Title}}</h4>
+			</div>
+			<div class="col s12 blue">
+				<div class="input-field col s6 white-text">
+				  <i class="material-icons prefix">local_hospital</i>
+					  <input placeholder="Investigateur" id="doc_name" type="text" class="white-text form-control" name="doc_name" ng-model="data.Doctor_Name" disabled/>
+					  <label for="doc_name" class="white-text">Nom du Investigateur</label>
+				</div>
+				<div class="input-field col s6 white-text">
+				  <i class="material-icons prefix">email</i>
+				  <input placeholder="Email" id="doc_email" type="email" disabled ng-model="data.Doctor_Email" class="white-text">
+				  <label for="doc_email"  class="white-text">Email du Investigateur</label>
+				</div>
+				<div class="input-field col s6 white-text">
+				  <i class="material-icons prefix">account_circle</i>
+				  <input placeholder="Your Name" id="name" type="text" disabled ng-model="data.Detail.Name" class="white-text">
+				  <label for="name"  class="white-text">Votre Nom</label>
+				</div>
+				<div class="input-field col s6 yellow-text bold" ng-hide="data.Expired || AlreadySigned > -1 || data.Canceled">
+					<i class="material-icons prefix">watch_later</i>
+					<input placeholder="Jours restant pour signer" id="days_left" type="text" disabled ng-model="data.DaysLeft" class="yellow-text">
+					<label for="days_left" class="yellow-text">Jours restants pour signer</label>
+				</div>
+				<div class="input-field col s6 yellow-text bold" ng-show="AlreadySigned == 0">
+					<i class="material-icons prefix">stars</i>
+					<input placeholder="Already Signed" id="days_left" type="text" disabled value="J'ai refusé" class="yellow-text">
+					<label for="days_left" class="yellow-text">Votre Statut</label>
+				</div>
+				<div class="input-field col s6 yellow-text bold" ng-show="AlreadySigned == 1">
+					<i class="material-icons prefix">stars</i>
+					<input placeholder="Already Signed" id="days_left" type="text" disabled value="J'ai accepté" class="yellow-text">
+					<label for="days_left" class="yellow-text">Votre Statut</label>
+				</div>
+			</div>
+			<div ng-show="SignedURLToView" class="col s12 no-padding">
+		  		<iframe id="pdf" src="{{SignedURLToView}}" frameborder="0" width="100%"></iframe>
+			</div>
+	      </div>
+	    </div>
+  	</div>
+
+  </body>
+
+	<!-- Vendor: Javascripts -->
+    <script type="text/javascript"
+      src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.0.0-alpha1/jquery.min.js"></script>
+    <script type="text/javascript"
+      src="https://ajax.googleapis.com/ajax/libs/angularjs/1.0.7/angular.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.97.3/js/materialize.min.js"></script>
+
+	<!-- App Javascripts -->
+	<!-- build:js({.tmp}) scripts/scripts.js -->
+	<script src="js/app.js"></script>
+	<script src="js/controllers/FileUploadCtrl.js"></script>
+	<script src="js/controllers/EmailInvites.js"></script>
+	<script src="js/services/FileUploadService.js"></script>
+	<script src="js/services/EmailService.js"></script>
+	<script src="js/directives/fileModel.js"></script>
+	<script src="js/directives/repeatDone.js"></script>
+	<script src="js/controllers/VersionCtrl.js"></script>
+	<script src="js/services/VersionService.js"></script>
+	<script src="js/services/CommonDataService.js"></script>
+	<script src="js/controllers/SignCtrl.js"></script>
+	<script src="js/services/SignService.js"></script>
+	<script src="js/custom.js"></script>
+	<!-- endbuild -->
+
+</html>

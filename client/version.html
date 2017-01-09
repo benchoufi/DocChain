@@ -1,0 +1,312 @@
+<!DOCTYPE HTML>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>Stratumn DocChain</title>
+
+		<!-- App CSS -->
+		<!-- build:css(.tmp) styles/main.css -->
+		<link rel="stylesheet" href="styles/main.css">
+		<!--endbuild-->
+
+		<!-- Meta-Information -->
+		<meta name="description" content="File Upload To S3">
+		<!--Optimize for mobile-->
+		<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+		<meta name="msapplication-tap-highlight" content="no" />
+		<meta name="theme-color" content="#ffab40">
+		<base href="/" />
+
+		<!-- Materialize.css Compiled and minified CSS -->
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.97.3/css/materialize.min.css">
+		<!-- Material Icons -->
+		<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+	</head>
+
+  <body>
+
+  	<div class="container-fluid" ng-app="FileUploadApp">
+
+	  	<!-- Modal Structure -->
+		<div id="modalFileUpload" class="modal modal-fixed-footer">
+			<div class="modal-content">
+				<div id="UploadFile1" class=" row" ng-controller="FileUploadCtrl">
+					<div class="col s12">
+						<div class="file-field input-field">
+						    <div ng-hide="isUploading" class="btn blue">
+						      <i class="material-icons">attach_file</i>
+						      <span>Choisir le PDF</span>
+						      <input id="fileupload" file-model="uploadFile" type="file" accept=".pdf">
+						    </div>
+					        <div class="file-path-wrapper">
+						        <input id="filename" class="file-path validate" type="text"/>
+						    </div>
+						</div>
+					</div>
+					<div ng-show="isUploading" id="UploadBtnProgress" class="col s12">
+						<div class="progress">
+						  <div class="indeterminate"></div>
+						</div>
+					</div>
+					<div ng-hide="isUploading" id="UploadBtn1" class="hide col s12">
+				  	  	<a class="col s6 waves-green btn left" ng-click="uploadVersion()"><i class="material-icons right">file_upload</i>Telecharger</a>
+					</div>
+			    </div>
+				<div id="EmailInvites" class="hide row" ng-controller="EmailInvites">
+					<a id="loadState" class="hide btn-large blue" ng-click="loadState()">loadState</a>
+					<div class="row">
+						<div class="input-field col s12">
+						  <i class="material-icons prefix">create</i>
+						  <input placeholder="Titre du document PDF" id="pdf_title" ng-model="pdf_title" type="text" class="validate">
+						  <label for="pdf_title">Titre du document PDF</label>
+						</div>
+						<div class="input-field col s12">
+						  <i class="material-icons prefix">speaker_notes</i>
+						  <textarea placeholder="cond" id="cond" ng-model="cond" class="materialize-textarea"></textarea>
+						  <label for="cond">Texte qui apparaitra dans l'email envoyé aux participants</label>
+						</div>
+						<div class="input-field col s6">
+						  <i class="material-icons prefix">person_add</i>
+						  <input id="InviteEmail" type="email" class="validate" ng-model="InviteEmail">
+						  <label for="InviteEmail">Adresse email du participant à inviter</label>
+						</div>
+						<div class="input-field col s5">
+						  <input id="InviteName" type="text" class="validate" ng-model="InviteName" ng-enter="AddInvites()">
+						  <label for="InviteName">Nom du participant</label>
+						</div>
+						<a class="s1 right btn-small circle waves-effect waves-light" ng-click="AddInvites()"> <i class="material-icons prefix">add_circle</i></a>
+					</div>
+					<div class="row">
+					  <div ng-repeat="Invite in Invites" class="left chip">
+					  	{{Invite.Name}}
+					    <i class="material-icons" ng-click="RemoveInvites(Invite.Email)">close</i>
+					  </div>
+					</div>
+					<div class="row">
+						<div class="input-field col s12">
+						  <i class="material-icons prefix">date_range</i>
+						  <input placeholder="expires" id="expires_in" ng-model="expires_in" type="text" class="validate">
+						  <label for="expires_in">Durée de l'accès au document (en jours)</label>
+						</div>
+						<div class="input-field col s12">
+						  <i class="material-icons prefix">format_list_numbered</i>
+						  <input placeholder="max_patients" id="max_patients" ng-model="max_patients" type="text" class="validate">
+						  <label for="max_patients">Nombre maximum d'inscriptions</label>
+						</div>
+					</div>
+					<div ng-show="isEmailing" id="EmailBtnProgress" class="col s12">
+						<div class="progress">
+						    <div class="indeterminate"></div>
+						</div>
+					</div>
+			        <div ng-hide="isEmailing" class="">
+			            <a ng-show="pdf_title && cond && expires_in && max_patients && Invites.length" class="waves-effect waves-light btn right" ng-click="SendEmailOnVersionUpdate()"><i class="material-icons right">send</i>Envoyer</a>
+			            <span ng-hide="pdf_title && cond && expires_in && max_patients && Invites.length" class="right-align right blue-text bold">* Merci de remplir tous les champs</span>
+			        </div>
+				</div>
+			</div>
+	        <div class="modal-footer" ng-controller="EmailInvites">
+	          <a href="#!" class="modal-action modal-close waves-effect waves-green btn red left">Cancel</a>
+	        </div>
+		</div>
+
+		<div class="fixed-action-btn" style="bottom: 45px; right: 24px;" ng-controller="EmailInvites">
+			<a data-position="top" data-delay="50" data-tooltip="Soumettre une nouvelle version du formulaire de consentement" class="btn-floating btn-large red tooltipped modal-trigger" href="#modalFileUpload">
+				<i class="large material-icons">attach_file</i>
+			</a>
+		</div>
+	    <div class="row blue lighten-5" ng-controller="VersionCtrl">
+	  	  <div ng-show="isLoading" class="container section">
+			  <div class="center-align preloader-wrapper big active">
+			    <div class="spinner-layer spinner-blue-only center-align ">
+			      <div class="circle-clipper left">
+			        <div class="circle"></div>
+			      </div><div class="gap-patch">
+			        <div class="circle"></div>
+			      </div><div class="circle-clipper right">
+			        <div class="circle"></div>
+			      </div>
+			    </div>
+			  </div>
+	  	  </div>
+	      <div ng-hide="isLoading" class="col s2 no-padding">
+	      		<div class="col s12 blue darken-2">
+					<div class="section left-align">
+						<div class="input-field col s12 white-text">
+						  <i class="material-icons prefix">local_hospital</i>
+							  <input placeholder="Investigateur" id="doc_name" type="text" class="white-text form-control" name="doc_name" ng-model="data.Doctor_Name" disabled/>
+							  <label for="doc_name" class="white-text">Nom de l'investigateur</label>
+						</div>
+						<div class="input-field col s12 white-text">
+						  <i class="material-icons prefix">email</i>
+						  <input placeholder="Email" id="doc_email" type="email" disabled ng-model="data.Doctor_Email" class="white-text">
+						  <label for="doc_email"  class="white-text">Email de l'investigateur</label>
+						</div>
+					</div>
+	      		</div>
+
+			    <div class="collection">
+			    	<a class="collection-item blue darken-2"><h4 class=" yellow-text" style="margin-top:0px">Versions du protocole</h4></a>
+			      	<a ng-repeat="version in versions | reverse" id="version-{{version.meta.linkHash}}" class="collection-item waves-effect"
+			      	ng-class="{active : SelectedLinkHash == version.meta.linkHash}"
+			      	ng-click="getVersionDetails(version.meta.linkHash)">
+						<span class="numberCircle left-align"><span>{{version.link.meta.priority}}</span></span>
+						 {{version.link.meta.tags[0].substr(0, version.link.meta.tags[0].indexOf('-')) | date:'dd MMM yyyy HH:mm'}}
+			      	</a>
+			      </a>
+				</div>
+	      </div>
+	      <div id="Details" ng-hide="isLoading" class="col s10 no-padding">
+	      	<div id="Details-Header" class="row blue no-padding">
+				<div class="col s9 blue left-align">
+					<h4 class="yellow-text no-padding">
+				      	<span class="numberCircle"><span>{{data.Version}}</span></span> {{data.PDF_Title}}
+					</h4>
+				</div>
+				<div class="col s3">
+					<!-- <button ng-hide="data.Canceled" class="col btn btn-lg btn-block btn-primary white black-text bold left" ng-click="cancel(data.LinkHash)">
+						<span class="hide-on-med-and-down">Annuler</span><i class="material-icons right hide-on-med-and-down blue-text">cancel</i><i class="material-icons hide-on-large-only blue-text">cancel</i>
+					</button>
+					<h4 class="black-text" ng-show="data.Canceled">Annulé</h4> -->
+				</div>
+				<div ng-show="data.Expired" class="input-field col s12 yellow-text bold">
+				  <i class="material-icons prefix">stars</i>
+				  <input placeholder="Status" id="status" type="text" disabled ng-model="data.Status" class=" yellow-text">
+				  <label for="status" class="yellow-text">Statut</label>
+				</div>
+				<div ng-hide="data.Expired" class="input-field col s6 yellow-text bold">
+				  <i class="material-icons prefix">stars</i>
+				  <input placeholder="Status" id="status" type="text" disabled ng-model="data.Status" class=" yellow-text">
+				  <label for="status" class="yellow-text">Statut</label>
+				</div>
+				<div ng-hide="data.Expired" class="input-field col s6 white-text bold">
+					<i class="material-icons prefix">watch_later</i>
+					<input placeholder="Jours restants pour signer" id="days_left" type="text" disabled ng-model="data.DaysLeft" class="white-text">
+					<label for="days_left" class="white-text">Jours restants pour signer</label>
+				</div>
+	      	</div>
+
+			<div id="Details-Body" class=" row">
+				<div class="row">
+					<div class="input-field col s12 black-text">
+					  <i class="material-icons prefix">speaker_notes</i>
+					  <textarea placeholder="Conditions" id="cond" class="materialize-textarea" disabled class="black-text" style="color: black">{{data.Conditions}}</textarea>
+					  <label for="cond" class="black-text">Teste qui apparaitra sur l'email envoyé aux participants</label>
+					</div>
+				</div>
+				<div class="row">
+					<div class="col s6 left">
+						<i class="material-icons prefix">group</i>
+						<label for="cond111">Invités</label>
+					</div>
+					<div class="col s6 right">
+					  <div class="switch right-align">
+					  </div>
+					</div>
+					<div class="col s12">
+						<div class="col s3 bold">Nom</div>
+			            <div class="col s3 bold">Email</div>
+			            <div class="col s3 bold">Statut du Consentement</div>
+			            <div class="col s3 bold">Date</div>
+					</div>
+					<ul class="col s12 collapsible " data-collapsible="accordion">
+						<li ng-repeat="Invite in data.Invites" repeat-done="initModals()" >
+						  <a class="collapsible-header no-padding blue lighten-5 black-text modal-trigger mt" href="#Row{{$index}}">
+						        <div class="col s3">{{Invite.Name}}</div>
+						        <div class="col s3">{{Invite.Email}}</div>
+						        <div class="col s3 blue-text">
+									<i ng-show="Invite.tags == undefined" class="material-icons ">help</i>
+						        	<i ng-show="Invite.tags[3] == 0" class="left material-icons">cancel</i>
+						        	<i ng-show="Invite.tags[3] == 1" class="left material-icons">check_box</i>
+						        </div>
+						        <div class="col s3">
+									<span ng-show="Invite.tags != undefined" class="">{{Invite.tags[6]}}</span>
+						        </div>
+						  </a>
+						  <div id="Row{{$index}}" class="modal modal-fixed-footer">
+								<div class="modal-content">
+									<div class="row ">
+										<div class="input-field col s6"	>
+											<i class="material-icons prefix">person</i>
+										  	<input type="text" ng-model="Invite.Name" class="black-text" disabled>
+										</div>
+										<div class="input-field col s6"	>
+											<i class="material-icons prefix">email</i>
+										  	<input type="text" ng-model="Invite.Email" class="black-text" disabled>
+										</div>
+										<div class="input-field col s6"	>
+										  	<span ng-show="Invite.tags[3] == 0" class="black-text">
+										  		<i class="material-icons prefix">stars</i>
+										  		<input type="text" value="a démenti" class="black-text" disabled>
+										  	</span>
+										  	<span ng-show="Invite.tags[3] == 1" class="black-text">
+										  		<i class="material-icons prefix">stars</i>
+										  		<input type="text" value="d'accord sur" class="black-text" disabled>
+										  	</span>
+										  	<span ng-show="Invite.tags == undefined" class="red-text">
+										  		<i class="material-icons prefix">stars</i>
+										  		<input type="text" value="En attente de réponse" class="black-text" disabled>
+										  	</span>
+										</div>
+										<div class="input-field col s6">
+										  	<i class="material-icons prefix">date_range</i>
+								          	<input type="text" ng-model="Invite.tags[6]" class="black-text" disabled>
+										</div>
+										<div ng-show="Invite.tags != undefined" class="input-field col s12">
+										  	<i class="material-icons prefix">vpn_key</i>
+										  	<input type="text" ng-model="Invite.Address.hash" class="black-text" disabled>
+										</div>
+										<div ng-show="Invite.tags != undefined" class="input-field col s12">
+										  	<blockquote class="teal-text word-wrap"><i class="material-icons teal-text">verified_user</i>{{Invite.tags[4]}}</blockquote>
+										</div>
+									</div>
+								</div>
+						        <div class="modal-footer">
+						          <a href="#!" class="modal-action modal-close waves-effect waves-teal btn red left">Cancel</a>
+						          <a ng-show="Invite.tags != undefined" href="https://docchain.stratumn.net/links/{{Invite.linkHash}}" target="_blank" class="modal-action modal-close waves-effect waves-teal btn bue right">View Chainscript</a>
+						        </div>
+
+						  </div>
+						</li>
+					</ul>
+				</div>
+				<div class="row no-padding">
+					<iframe id="pdf" src="{{SignedURLToView}}" frameborder="0" width="100%"></iframe>
+				</div>
+			</div>
+
+	      </div>
+	    </div>
+  	</div>
+
+  </body>
+
+	<!-- Vendor: Javascripts -->
+    <script type="text/javascript"
+      src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.0.0-alpha1/jquery.min.js"></script>
+    <script type="text/javascript"
+      src="https://ajax.googleapis.com/ajax/libs/angularjs/1.0.7/angular.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.97.3/js/materialize.min.js"></script>
+  	<script>
+	   //  $(document).ready(function(){
+	   //  	$('.modal-trigger').leanModal();
+  		// });
+    </script>
+	<!-- App Javascripts -->
+	<!-- build:js({.tmp}) scripts/scripts.js -->
+	<script src="js/app.js"></script>
+	<script src="js/controllers/FileUploadCtrl.js"></script>
+	<script src="js/controllers/EmailInvites.js"></script>
+	<script src="js/services/FileUploadService.js"></script>
+	<script src="js/services/EmailService.js"></script>
+	<script src="js/directives/fileModel.js"></script>
+	<script src="js/directives/repeatDone.js"></script>
+	<script src="js/controllers/VersionCtrl.js"></script>
+	<script src="js/services/VersionService.js"></script>
+	<script src="js/services/CommonDataService.js"></script>
+	<script src="js/controllers/SignCtrl.js"></script>
+	<script src="js/services/SignService.js"></script>
+	<script src="js/custom.js"></script>
+	<!-- endbuild -->
+</html>
